@@ -6,11 +6,11 @@
 
 | 版本 | 文件 | 大小 | 说明 |
 | --- | --- | --- | --- |
-| 2.1.3 | [`91-client-v2.1.3.apk`](https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk) | 2.4 MB | 最新版，推荐 |
+| 2.1.3 | [`91-client-v2.1.3.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk) | 2.4 MB | 最新版，推荐 |
 
 ```bash
 # 直接下载最新版
-curl -LO https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk
+curl -LO https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk
 
 # 安装
 adb install -r 91-client-v2.1.3.apk

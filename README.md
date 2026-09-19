@@ -7,13 +7,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.1.3-3DDC84?logo=android&logoColor=white"></a>
+  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.1.3-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Android 7.0+" src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white">
   <img alt="大小 2.4 MB" src="https://img.shields.io/badge/APK-2.4%20MB-blue">
 </p>
 
-> 本仓库是 [nianzhibai/91](https://github.com/nianzhibai/91) 的 fork，在保留上游全部代码的基础上，
-> **额外附带了一个从零手写的原生 Android 客户端**，源码在 [`android/nineone/`](android/nineone/)。
+> **仓库名 `91-android-client`** —— 这是 [nianzhibai/91](https://github.com/nianzhibai/91) 的 fork，
+> 保留了上游完整的服务端代码，并**附带一个从零手写的原生 Android 客户端**，
+> 源码在 [`android/nineone/`](android/nineone/)。
+> 只要服务端，请用 [上游仓库](https://github.com/nianzhibai/91) 的部署文档；要手机上看片，直接下下面的 APK。
 
 ## 📱 Android 客户端
 
@@ -25,14 +27,14 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk)** |
+| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk)** |
 | 大小 | 2.4 MB（2,508,093 字节） |
 | 版本 | 2.1.3（versionCode 7） |
 | 系统要求 | Android 7.0（API 24）及以上 |
 | 包名 | `com.whooc.nineone` |
 | SHA-256 | `8156412836aa63fdc94bbfe2ed41546c3d0e3c7d6922020982784ff35aa35a7d` |
 
-直链：`https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk`
+直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk`
 
 ```bash
 # 安装
@@ -82,7 +84,7 @@ sha256sum 91-client-v2.1.3.apk
 
 ```bash
 sudo apt update && sudo apt install -y curl ca-certificates
-curl -fsSL https://raw.githubusercontent.com/whooc/91/main/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/main/install.sh -o install.sh
 sudo bash install.sh
 ```
 部署完成后访问：`http://服务器IP:9191/`
@@ -104,7 +106,7 @@ mkdir video-site-91 && cd video-site-91
 ```
 **2. 拉取仓库内置`docker-compose.yml`**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/whooc/91/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/main/docker-compose.yml -o docker-compose.yml
 ```
 **3. 启动**
 ```bash

@@ -12,7 +12,7 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk)** |
+| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk)** |
 | 大小 | 2.4 MB（2,508,093 字节） |
 | 版本 | 2.1.3（versionCode 7） |
 | 包名 | `com.whooc.nineone` |
@@ -22,7 +22,7 @@
 直链：
 
 ```
-https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk
+https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk
 ```
 
 也可以直接看仓库里的 [`apk/`](../../apk/) 目录。
