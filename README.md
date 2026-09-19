@@ -6,6 +6,63 @@
   😄 个人私有视频站 😄
 </p>
 
+<p align="center">
+  <a href="https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.1.3-3DDC84?logo=android&logoColor=white"></a>
+  <img alt="Android 7.0+" src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white">
+  <img alt="大小 2.4 MB" src="https://img.shields.io/badge/APK-2.4%20MB-blue">
+</p>
+
+> 本仓库是 [nianzhibai/91](https://github.com/nianzhibai/91) 的 fork，在保留上游全部代码的基础上，
+> **额外附带了一个从零手写的原生 Android 客户端**，源码在 [`android/nineone/`](android/nineone/)。
+
+## 📱 Android 客户端
+
+**不是网页套壳。** 界面、播放器、手势全部是 Kotlin + Jetpack Compose + Media3 实现。
+整个 APK 里没有任何 WebView —— 反编译 `classes.dex` 搜 `Landroid/webkit/WebView;`，
+`loadUrl` / `WebViewClient` / `addJavascriptInterface` / `evaluateJavascript` 命中数全是 **0**。
+
+### 下载
+
+| | |
+| --- | --- |
+| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk)** |
+| 大小 | 2.4 MB（2,508,093 字节） |
+| 版本 | 2.1.3（versionCode 7） |
+| 系统要求 | Android 7.0（API 24）及以上 |
+| 包名 | `com.whooc.nineone` |
+| SHA-256 | `8156412836aa63fdc94bbfe2ed41546c3d0e3c7d6922020982784ff35aa35a7d` |
+
+直链：`https://github.com/whooc/91/raw/main/apk/91-client-v2.1.3.apk`
+
+```bash
+# 安装
+adb install -r 91-client-v2.1.3.apk
+
+# 校验（结果应和上表 SHA-256 一致）
+sha256sum 91-client-v2.1.3.apk
+```
+
+安装后**首次启动需要填写你自己的 91 服务端地址** —— 地址不内置在 APK 里，
+支持 `host`、`host:port`、`http://host:port`、`https://域名`，会自动补全协议头。
+
+### 客户端功能
+
+| 模块 | 说明 |
+| --- | --- |
+| 首页 | 推荐 / 最新，网格卡片；卡片进入视口中心时静音循环播放 12 秒预览 |
+| 列表 | 关键词、标签、排序（最新 / 热门 / 最近），滚动分页 |
+| 短视频 | 竖向沉浸流，上下滑动切换，左右滑动退出；可拖拽进度条；横版视频按真实比例信箱化并给出全屏入口 |
+| 详情 | 简介、标签、字幕列表、相关推荐、收藏 |
+| 播放器 | Media3 ExoPlayer，断点续播、倍速、字幕开关、全屏、静音 |
+| 片库 | 收藏与观看记录，本地持久化 |
+| 我的 / 设置 | 服务器地址、四套主题、全局静音、清空本地数据、退出登录 |
+
+短视频的信息层（标题、观看次数、右侧按钮、进度条）5 秒后自动隐藏，任意触摸恢复。
+
+构建方式、接口列表、签名配置见 **[`android/nineone/README.md`](android/nineone/README.md)**。
+
+---
+
 ## 功能特性
 
 - **多网盘接入** — 支持115、PikPak、123网盘、联通网盘、光鸭网盘、OneDrive、Google Drive、WebDAV等
@@ -110,8 +167,3 @@ docker compose logs -f                                  # 查看日志
 - [Cli-Proxy-API-Management-Center](https://github.com/router-for-me/Cli-Proxy-API-Management-Center) — 参考其页面设计
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 当前项目使用的视频播放器
 - [OpenList](https://github.com/OpenListTeam/OpenList) — 参考其网盘接口
-
-
-
-  </tr>
-</table>
