@@ -25,7 +25,7 @@
 
 ```bash
 sudo apt update && sudo apt install -y curl ca-certificates
-curl -fsSL https://raw.githubusercontent.com/nianzhibai/91/main/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/whooc/91/main/install.sh -o install.sh
 sudo bash install.sh
 ```
 部署完成后访问：`http://服务器IP:9191/`
@@ -47,7 +47,7 @@ mkdir video-site-91 && cd video-site-91
 ```
 **2. 拉取仓库内置`docker-compose.yml`**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nianzhibai/91/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/whooc/91/main/docker-compose.yml -o docker-compose.yml
 ```
 **3. 启动**
 ```bash
@@ -111,17 +111,7 @@ docker compose logs -f                                  # 查看日志
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 当前项目使用的视频播放器
 - [OpenList](https://github.com/OpenListTeam/OpenList) — 参考其网盘接口
 
-## 捐赠
 
-如果这个项目对你有帮助，欢迎请我喝杯咖啡
 
-<table>
-  <tr>
-    <td width="50%"><img src="ReadMeImage/donate-wechat.webp" alt="微信" width="100%" /></td>
-    <td width="50%"><img src="ReadMeImage/donate-alipay.webp" alt="支付宝" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center">微信</td>
-    <td align="center">支付宝</td>
   </tr>
 </table>
