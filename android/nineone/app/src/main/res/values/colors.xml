@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppTheme.DARK.bgPage so the very first frame is not a white
+         flash before Compose draws. -->
+    <color name="nineone_window_background">#FF0B0C10</color>
+
+    <!-- Referenced by mipmap-anydpi-v26/ic_launcher.xml -->
+    <color name="ic_launcher_background">#FF050505</color>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Compose owns every pixel of this app, so the XML theme only has to:
+        * drop the platform action bar
+        * paint the window in the dark palette so cold start does not flash white
+        * let the system bars be transparent for edge-to-edge
+
+      The light status/navigation bar appearance is pushed from NineOneTheme
+      (see ui/theme/AppTheme.kt), because the palette follows the server theme
+      rather than the system dark-mode setting.
+    -->
+    <style name="Theme.NineOne" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/nineone_window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

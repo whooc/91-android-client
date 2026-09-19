@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The 91 server is self-hosted and typically reached over plain HTTP on a
+  LAN/relay address (http://139.199.159.86:9191), so cleartext has to be
+  allowed for whatever address the user types in settings. HTTPS still uses
+  the normal system trust store.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
