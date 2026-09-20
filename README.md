@@ -15,8 +15,10 @@
 > **仓库名 `91-android-client`** —— 这是 [nianzhibai/91](https://github.com/nianzhibai/91) 的 fork，
 > 保留了上游完整的服务端代码，并**附带一个从零手写的原生 Android 客户端**，
 > 源码在 [`android/nineone/`](android/nineone/)。
-> 本仓库**自持发布产物**：服务端安装包与 Docker 镜像都由本仓库的 Actions 构建，并固定到 tag `v1.0.0`，
-> 不会因为上游更新而变化 —— 部署请用**本仓库**的 `install.sh`。
+> 本仓库**自持发布产物**：服务端安装包与 Docker 镜像都由本仓库自行构建并发布到
+> [`v1.0.0`](https://github.com/whooc/91-android-client/releases/tag/v1.0.0)，
+> `install.sh` 与 `docker-compose.yml` 都已钉死到这个 tag —— 上游再怎么更新，
+> 都不会影响已经部署好的实例。部署请用**本仓库**的 `install.sh`。
 
 ## 📱 Android 客户端
 
@@ -85,17 +87,26 @@ sha256sum 91-client-v2.1.3.apk
 
 ```bash
 sudo apt update && sudo apt install -y curl ca-certificates
-curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/main/install.sh -o install.sh
+# 从 v1.0.0 tag 取脚本而不是 main —— 这是「固定版本」的关键一步
+curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/v1.0.0/install.sh -o install.sh
 sudo bash install.sh
 ```
 部署完成后访问：`http://服务器IP:9191/`
+
+脚本里已经固定 `GITHUB_REPO=whooc/91-android-client`、`VERSION=v1.0.0`、
+`INSTALL_SCRIPT_REF=v1.0.0`，所以安装和升级都只会在**本仓库的这个 tag** 里取包，
+不会碰到上游的 release。要换版本时显式覆盖即可：
+
+```bash
+sudo VERSION=v1.1.0 INSTALL_SCRIPT_REF=v1.1.0 bash install.sh
+```
 
 安装后自动注册 `91` 管理命令：
 ```bash
 91                  # 打开管理菜单
 91 stop             # 停止服务
 91 restart          # 重启服务
-91 update           # 更新到最新版本
+91 update           # 更新（默认仍固定在 v1.0.0）
 91 status           # 查看运行状态
 91 reset-password   # 重置密码
 ```
@@ -107,12 +118,15 @@ mkdir video-site-91 && cd video-site-91
 ```
 **2. 拉取仓库内置`docker-compose.yml`**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/whooc/91-android-client/v1.0.0/docker-compose.yml -o docker-compose.yml
 ```
 **3. 启动**
 ```bash
 docker compose up -d
 ```
+
+`docker-compose.yml` 里的镜像地址已指向 `ghcr.io/whooc/91-android-client:stable`，
+同样只跟本仓库走，与上游镜像无关。
 **常用命令：**
 ```bash
 docker compose pull && docker compose up -d             # 更新并重启
