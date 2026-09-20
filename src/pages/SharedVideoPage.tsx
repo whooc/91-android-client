@@ -158,7 +158,7 @@ export default function SharedVideoPage() {
 
       <footer className="share-page__footer">
         <a
-          href="https://github.com/nianzhibai/91"
+          href="https://github.com/whooc/91-android-client"
           target="_blank"
           rel="noopener noreferrer"
         >

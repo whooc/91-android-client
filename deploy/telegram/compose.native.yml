@@ -3,7 +3,7 @@
 name: video-site-telegram
 services:
   telegram-bot-api:
-    image: ${TELEGRAM_BOT_API_IMAGE:-ghcr.io/nianzhibai/telegram-bot-api-for-91:stable}
+    image: ${TELEGRAM_BOT_API_IMAGE:-ghcr.io/whooc/telegram-bot-api-for-91:stable}
     command: ["--http-port", "7878"]
     # Match the native backend service, which runs as root in this deployment.
     # If its user changes, update this UID:GID and the shared directory permissions.

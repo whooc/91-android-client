@@ -1,6 +1,6 @@
 services:
   video-site-91:
-    image: ghcr.io/nianzhibai/91:stable
+    image: ghcr.io/whooc/91-android-client:stable
     container_name: video-site-91
     ports:
       - "9191:9191"

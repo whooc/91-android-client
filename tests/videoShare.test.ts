@@ -119,7 +119,7 @@ test("share header logo aligns with the video content and clears the safe area",
 test("the share footer text links to the project repository", () => {
   assert.match(
     sharePageSource,
-    /href="https:\/\/github\.com\/nianzhibai\/91"[\s\S]*?>\s*© \{new Date\(\)\.getFullYear\(\)\} 91\s*<\/a>/
+    /href="https:\/\/github\.com\/whooc\/91-android-client"[\s\S]*?>\s*© \{new Date\(\)\.getFullYear\(\)\} 91\s*<\/a>/
   );
   assert.match(
     shareStylesSource,

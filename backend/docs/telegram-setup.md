@@ -23,7 +23,7 @@
 docker compose -f docker-compose.yml -f docker-compose.telegram.yml up -d --pull always
 ```
 
-网站和配套服务都直接拉取 GHCR 预构建镜像，服务器无需编译或安装编译工具链。Bot API 镜像为 `ghcr.io/nianzhibai/telegram-bot-api-for-91:stable`，包含固定版本的官方 Bot API 和面板配置管理程序，支持 `linux/amd64` 与 `linux/arm64`。两个服务启动后，Bot API 容器等待面板配置；项目网站可正常使用。
+网站和配套服务都直接拉取 GHCR 预构建镜像，服务器无需编译或安装编译工具链。Bot API 镜像为 `ghcr.io/whooc/telegram-bot-api-for-91:stable`，包含固定版本的官方 Bot API 和面板配置管理程序，支持 `linux/amd64` 与 `linux/arm64`。两个服务启动后，Bot API 容器等待面板配置；项目网站可正常使用。
 
 配套文件设置了两个专用共享卷：
 

@@ -1,6 +1,6 @@
 # 91 原生客户端 · NineOne
 
-一个用 **Kotlin + Jetpack Compose 从零手写**的 [91](https://github.com/nianzhibai/91) 服务端 **原生** Android 客户端。
+一个用 **Kotlin + Jetpack Compose 从零手写**的 [91](https://github.com/whooc/91-android-client) 服务端 **原生** Android 客户端。
 
 **没有 WebView。** 界面、播放器、手势全部是 Compose + Media3 实现。
 把 APK 里的 `classes.dex` 拿出来搜 `Landroid/webkit/WebView;`，命中数是 **0**；

@@ -15,7 +15,8 @@
 > **仓库名 `91-android-client`** —— 这是 [nianzhibai/91](https://github.com/nianzhibai/91) 的 fork，
 > 保留了上游完整的服务端代码，并**附带一个从零手写的原生 Android 客户端**，
 > 源码在 [`android/nineone/`](android/nineone/)。
-> 只要服务端，请用 [上游仓库](https://github.com/nianzhibai/91) 的部署文档；要手机上看片，直接下下面的 APK。
+> 本仓库**自持发布产物**：服务端安装包与 Docker 镜像都由本仓库的 Actions 构建，并固定到 tag `v1.0.0`，
+> 不会因为上游更新而变化 —— 部署请用**本仓库**的 `install.sh`。
 
 ## 📱 Android 客户端
 
