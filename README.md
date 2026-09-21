@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.2.0-3DDC84?logo=android&logoColor=white"></a>
+  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.3.0-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Android 7.0+" src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white">
   <img alt="大小 2.4 MB" src="https://img.shields.io/badge/APK-2.4%20MB-blue">
 </p>
@@ -35,21 +35,21 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.2.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk)** |
-| 大小 | 2.4 MB（2,524,473 字节） |
-| 版本 | 2.2.0（versionCode 8） |
+| **安装包** | **[`apk/91-client-v2.3.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk)** |
+| 大小 | 2.4 MB（2,525,193 字节） |
+| 版本 | 2.3.0（versionCode 9） |
 | 系统要求 | Android 7.0（API 24）及以上 |
 | 包名 | `com.whooc.nineone` |
-| SHA-256 | `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd` |
+| SHA-256 | `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7` |
 
-直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk`
+直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk`
 
 ```bash
 # 安装
-adb install -r 91-client-v2.2.0.apk
+adb install -r 91-client-v2.3.0.apk
 
 # 校验（结果应和上表 SHA-256 一致）
-sha256sum 91-client-v2.2.0.apk
+sha256sum 91-client-v2.3.0.apk
 ```
 
 安装后**首次启动需要填写你自己的 91 服务端地址** —— 地址不内置在 APK 里，
@@ -61,13 +61,15 @@ sha256sum 91-client-v2.2.0.apk
 | --- | --- |
 | 首页 | 推荐 / 最新，网格卡片；卡片进入视口中心时静音循环播放 12 秒预览 |
 | 列表 | 关键词、标签、排序（最新 / 热门 / 最近），滚动分页 |
-| 短视频 | 竖向沉浸流，上下滑动切换，左右滑动退出；可拖拽进度条；横版视频按真实比例信箱化并给出全屏入口 |
+| 短视频 | 竖向沉浸流，上下滑动切换，左右滑动退出；可拖拽进度条；画面按真实比例完整显示（不裁剪），双指缩放 1x–5x |
 | 详情 | 简介、标签、字幕列表、相关推荐、收藏 |
 | 播放器 | Media3 ExoPlayer，断点续播、倍速、字幕开关、全屏、静音 |
 | 片库 | 收藏与观看记录，本地持久化 |
 | 我的 / 设置 | 服务器地址、四套主题、全局静音、进入密码、退出即需重登、应用名称与 Logo、清空本地数据、退出登录 |
 
 短视频的信息层（标题、观看次数、右侧按钮、进度条）5 秒后自动隐藏，任意触摸恢复。
+
+短视频的画面**一律按真实宽高比完整显示**，不做任何裁剪：不匹配手机屏幕比例的视频（1:1、3:4、4:3 这些在短片流里很常见）会居中留黑边，而不是被居中裁掉两边。想铺满屏幕就**双指放大**（1x–5x，以手指中心为锚点），放大后单指拖动看细节，右上角常驻倍率和一个「还原」；翻到下一个视频自动回到 1x。
 
 ### 安全与个性化
 

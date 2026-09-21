@@ -2,9 +2,14 @@
 
 一个用 **Kotlin + Jetpack Compose 从零手写**的 [91](https://github.com/whooc/91-android-client) 服务端 **原生** Android 客户端。
 
-**没有 WebView。** 界面、播放器、手势全部是 Compose + Media3 实现。
-把 APK 里的 `classes.dex` 拿出来搜 `Landroid/webkit/WebView;`，命中数是 **0**；
-`loadUrl` / `WebViewClient` / `addJavascriptInterface` / `evaluateJavascript` / `loadDataWithBaseURL` 同样是 **0**。
+**不加载任何网页。** 界面、播放器、手势全部是 Compose + Media3 实现，没有任何 JS 桥 ——
+把 APK 里的 `classes.dex` 拿出来搜 `loadUrl` / `WebViewClient` / `addJavascriptInterface` /
+`evaluateJavascript` / `loadDataWithBaseURL`，命中数全是 **0**。
+
+不过搜 `Landroid/webkit/WebView;` 会命中 **1 个类**：那是 Media3 1.4.1 内部
+`androidx.media3.ui.SubtitleView` 的旧 API 字幕回退实现，它的构造函数会**无条件**同时
+建好 canvas 和 WebView 两套字幕输出视图。它不加载地址、不接 JS、本包不挂字幕所以永不渲染
+—— 但类客观存在，所以这里如实写明，而不是笼统地说「没有 WebView」。
 
 ---
 
@@ -12,17 +17,17 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.2.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk)** |
-| 大小 | 2.4 MB（2,524,473 字节） |
-| 版本 | 2.2.0（versionCode 8） |
+| **安装包** | **[`apk/91-client-v2.3.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk)** |
+| 大小 | 2.4 MB（2,525,193 字节） |
+| 版本 | 2.3.0（versionCode 9） |
 | 包名 | `com.whooc.nineone` |
 | 系统要求 | Android 7.0（API 24）及以上 |
-| SHA-256 | `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd` |
+| SHA-256 | `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7` |
 
 直链：
 
 ```
-https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk
+https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk
 ```
 
 也可以直接看仓库里的 [`apk/`](../../apk/) 目录。
@@ -31,18 +36,18 @@ https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk
 
 ```bash
 # Linux / macOS
-sha256sum 91-client-v2.2.0.apk
+sha256sum 91-client-v2.3.0.apk
 
 # Windows PowerShell
-Get-FileHash .\91-client-v2.2.0.apk -Algorithm SHA256
+Get-FileHash .\91-client-v2.3.0.apk -Algorithm SHA256
 ```
 
-结果应为 `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd`。
+结果应为 `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7`。
 
 ### 安装
 
 ```bash
-adb install -r 91-client-v2.2.0.apk
+adb install -r 91-client-v2.3.0.apk
 ```
 
 或者把 APK 传到手机上直接点开安装（需要在系统设置里允许「安装未知来源应用」）。
@@ -71,7 +76,7 @@ App **不内置任何服务器地址**。第一次打开会让你填：
 | --- | --- |
 | 首页 | 推荐 / 最新，网格卡片；卡片进入视口中心时静音循环播放 12 秒预览 |
 | 列表 | 关键词、标签、排序（最新 / 热门 / 最近），滚动分页 |
-| 短视频 | 竖向沉浸流，上下滑动切换；左右滑动退出；可拖拽进度条；横版视频按真实比例信箱化并给出全屏入口 |
+| 短视频 | 竖向沉浸流，上下滑动切换；左右滑动退出；可拖拽进度条；画面按真实比例完整显示（不裁剪），双指缩放 1x–5x |
 | 详情 | 简介、标签、字幕列表、相关推荐、收藏 |
 | 播放器 | Media3 ExoPlayer，断点续播、倍速、字幕开关、全屏、静音 |
 | 片库 | 收藏与观看记录，本地持久化（`history.json` / `favorites.json`） |
@@ -81,7 +86,29 @@ App **不内置任何服务器地址**。第一次打开会让你填：
 
 - 短视频的信息层（标题、观看次数、右侧按钮、进度条）**5 秒后自动隐藏**，任意触摸恢复。
 - 底栏上方有一个**全局静音**悬浮按钮，短视频与播放器共用同一个开关状态。
-- 横版视频在短视频流里**不会被强行拉伸成竖版**，而是按原始比例缩小居中。
+- 短视频的画面**一律按真实宽高比完整显示**，不做任何裁剪，详见下面「短视频画面」。
+- 横版视频在短视频流里**不会被强行拉伸成竖版**，而是按原始比例缩小居中，并给出全屏入口。
+
+### 短视频画面（2.3.0 新增）
+
+短片流里混着 1:1、3:4、4:3 这些非 9:16 的素材。早先的实现只分「横屏 / 竖屏」两类，竖屏一律用 `AspectRatioFrameLayout.RESIZE_MODE_ZOOM` 满屏居中裁剪 —— 对 9:16 的片子看着还行，但 1:1 在 19.5:9 的手机上**只剩 46% 的画面**，3:4 只剩 61%，而且没有任何提示。
+
+现在一律按真实宽高比 **contain** 适配，居中摆放，多余的地方留黑边：
+
+- 页面尺寸用 `Modifier.onSizeChanged` **实测**，不用窗口尺寸 —— 底部栏和系统栏已经扣掉了。
+- 按视频宽高比算出一个矩形，**播放器和封面图共用同一个矩形**。否则加载期间封面会从黑边里露出一圈。
+- 视频比例还没上报时（解码器 `onVideoSizeChanged` 之前）先铺满，避免闪一下 0 尺寸。
+
+双指缩放 1x–5x：
+
+- **双指始终是缩放**，以手指中心为锚点（不是死板地绕画面中心）。
+- **单指只在已经放大之后**才用来平移；1x 时这个手势不消费任何事件，所以上下翻页、左右滑出、单击播放/暂停的行为和以前完全一样。
+- 缩放和平移量在**每次写入时夹紧**（画面不能小于页面），所以拖不出黑边。
+- 右上角常驻倍率和一个「还原」，不受工具栏自动隐藏影响；翻到别的页面自动回到 1x。
+
+> ⚠️ **短视频页的播放器必须用 `TextureView`，不能用默认的 `SurfaceView`。**
+> 缩放是用 Compose 的 `graphicsLayer` 变换做的，而 `SurfaceView` 渲染在独立窗口层里、不在 Compose 树中，变换对它无效 —— 画面会原地不动，只有封面图在缩放。
+> 所以有了 [`res/layout/view_shorts_player.xml`](app/src/main/res/layout/view_shorts_player.xml)：用 `app:surface_type="texture_view"` 把这件事固定在资源里，再用 `LayoutInflater` 加载（`PlayerView(ctx)` 构造函数拿不到这个属性）。
 
 ### 安全与个性化（2.2.0 新增）
 
@@ -216,7 +243,7 @@ android/nineone/
           components/         卡片、缩略图、预览宿主、状态框、BrandMark
           vm/                 ViewModel
           screens/            锁屏 / 登录 / 首页 / 列表 / 短视频 / 详情 / 播放器 / 片库 / 我的 / 设置
-      res/                    图标、主题、网络安全配置
+      res/                    图标、主题、网络安全配置；layout/view_shorts_player.xml 是短视频页的播放器（TextureView）
 ```
 
 ---
