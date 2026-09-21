@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.1.3-3DDC84?logo=android&logoColor=white"></a>
+  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.2.0-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Android 7.0+" src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white">
   <img alt="大小 2.4 MB" src="https://img.shields.io/badge/APK-2.4%20MB-blue">
 </p>
@@ -22,29 +22,34 @@
 
 ## 📱 Android 客户端
 
-**不是网页套壳。** 界面、播放器、手势全部是 Kotlin + Jetpack Compose + Media3 实现。
-整个 APK 里没有任何 WebView —— 反编译 `classes.dex` 搜 `Landroid/webkit/WebView;`，
-`loadUrl` / `WebViewClient` / `addJavascriptInterface` / `evaluateJavascript` 命中数全是 **0**。
+**不是网页套壳。** 界面、播放器、手势全部是 Kotlin + Jetpack Compose + Media3 实现，
+不加载任何网页：反编译 `classes.dex`，`loadUrl` / `WebViewClient` /
+`addJavascriptInterface` / `evaluateJavascript` 命中数全是 **0**，没有任何 JS 桥。
+
+包里确实有**一个**带 `WebView` 字样的类，来自 `androidx.media3.ui` 内部 `SubtitleView`
+的旧 API 字幕回退实现（Media3 1.4.1 的构造函数会同时建好 canvas 和 WebView 两套输出视图）。
+它不加载地址、不接 JS、在本包 minSdk 24 上也不参与渲染，但类客观存在 —— 所以这里如实写明，
+而不是笼统地说「一个 WebView 都没有」。
 
 ### 下载
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk)** |
-| 大小 | 2.4 MB（2,508,093 字节） |
-| 版本 | 2.1.3（versionCode 7） |
+| **安装包** | **[`apk/91-client-v2.2.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk)** |
+| 大小 | 2.4 MB（2,524,473 字节） |
+| 版本 | 2.2.0（versionCode 8） |
 | 系统要求 | Android 7.0（API 24）及以上 |
 | 包名 | `com.whooc.nineone` |
-| SHA-256 | `8156412836aa63fdc94bbfe2ed41546c3d0e3c7d6922020982784ff35aa35a7d` |
+| SHA-256 | `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd` |
 
-直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk`
+直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk`
 
 ```bash
 # 安装
-adb install -r 91-client-v2.1.3.apk
+adb install -r 91-client-v2.2.0.apk
 
 # 校验（结果应和上表 SHA-256 一致）
-sha256sum 91-client-v2.1.3.apk
+sha256sum 91-client-v2.2.0.apk
 ```
 
 安装后**首次启动需要填写你自己的 91 服务端地址** —— 地址不内置在 APK 里，
@@ -60,9 +65,17 @@ sha256sum 91-client-v2.1.3.apk
 | 详情 | 简介、标签、字幕列表、相关推荐、收藏 |
 | 播放器 | Media3 ExoPlayer，断点续播、倍速、字幕开关、全屏、静音 |
 | 片库 | 收藏与观看记录，本地持久化 |
-| 我的 / 设置 | 服务器地址、四套主题、全局静音、清空本地数据、退出登录 |
+| 我的 / 设置 | 服务器地址、四套主题、全局静音、进入密码、退出即需重登、应用名称与 Logo、清空本地数据、退出登录 |
 
 短视频的信息层（标题、观看次数、右侧按钮、进度条）5 秒后自动隐藏，任意触摸恢复。
+
+### 安全与个性化
+
+| 功能 | 说明 |
+| --- | --- |
+| **进入密码** | 打开应用前要输入的**本机密码**。加盐 PBKDF2-HMAC-SHA256（12 万次迭代）后存本机，明文不落盘，与服务器登录密码无关。退到后台超过 30 秒会重新上锁；关闭密码需要先输对当前密码。忘记只能清除应用数据重置 |
+| **退出后需要重新登录** | 开关。打开后**彻底关掉应用**即清除本机登录状态，下次打开要重新登录；只是切到后台不算，不会因为看一眼通知就被登出 |
+| **应用名称 / Logo** | 设置里可改。名称实时作用于启动页、登录页、首页标题和「我的」卡片；Logo 从相册选图，居中裁剪成 512×512 存进应用私有目录。**桌面图标和名称由安装包决定，运行时改不了**（Android 平台限制） |
 
 构建方式、接口列表、签名配置见 **[`android/nineone/README.md`](android/nineone/README.md)**。
 

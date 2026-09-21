@@ -12,17 +12,17 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.1.3.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk)** |
-| 大小 | 2.4 MB（2,508,093 字节） |
-| 版本 | 2.1.3（versionCode 7） |
+| **安装包** | **[`apk/91-client-v2.2.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk)** |
+| 大小 | 2.4 MB（2,524,473 字节） |
+| 版本 | 2.2.0（versionCode 8） |
 | 包名 | `com.whooc.nineone` |
 | 系统要求 | Android 7.0（API 24）及以上 |
-| SHA-256 | `8156412836aa63fdc94bbfe2ed41546c3d0e3c7d6922020982784ff35aa35a7d` |
+| SHA-256 | `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd` |
 
 直链：
 
 ```
-https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk
+https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.2.0.apk
 ```
 
 也可以直接看仓库里的 [`apk/`](../../apk/) 目录。
@@ -31,18 +31,18 @@ https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.1.3.apk
 
 ```bash
 # Linux / macOS
-sha256sum 91-client-v2.1.3.apk
+sha256sum 91-client-v2.2.0.apk
 
 # Windows PowerShell
-Get-FileHash .\91-client-v2.1.3.apk -Algorithm SHA256
+Get-FileHash .\91-client-v2.2.0.apk -Algorithm SHA256
 ```
 
-结果应为 `8156412836aa63fdc94bbfe2ed41546c3d0e3c7d6922020982784ff35aa35a7d`。
+结果应为 `e653d31617709384293f5f3dc11240c67812376b15bd14511427b67f19289cbd`。
 
 ### 安装
 
 ```bash
-adb install -r 91-client-v2.1.3.apk
+adb install -r 91-client-v2.2.0.apk
 ```
 
 或者把 APK 传到手机上直接点开安装（需要在系统设置里允许「安装未知来源应用」）。
@@ -75,13 +75,29 @@ App **不内置任何服务器地址**。第一次打开会让你填：
 | 详情 | 简介、标签、字幕列表、相关推荐、收藏 |
 | 播放器 | Media3 ExoPlayer，断点续播、倍速、字幕开关、全屏、静音 |
 | 片库 | 收藏与观看记录，本地持久化（`history.json` / `favorites.json`） |
-| 我的 / 设置 | 服务器地址、四套主题（暗黑 / 奶油白 / 星空蓝 / 跟随服务器）、全局静音、清空本地数据、退出登录 |
+| 我的 / 设置 | 服务器地址、四套主题（暗黑 / 奶油白 / 星空蓝 / 跟随服务器）、全局静音、进入密码、退出即需重登、应用名称与 Logo、清空本地数据、退出登录 |
 
 细节：
 
 - 短视频的信息层（标题、观看次数、右侧按钮、进度条）**5 秒后自动隐藏**，任意触摸恢复。
 - 底栏上方有一个**全局静音**悬浮按钮，短视频与播放器共用同一个开关状态。
 - 横版视频在短视频流里**不会被强行拉伸成竖版**，而是按原始比例缩小居中。
+
+### 安全与个性化（2.2.0 新增）
+
+- **进入密码**：本机密码，`AppLock` 用加盐 PBKDF2-HMAC-SHA256（12 万次迭代）哈希后存
+  `SharedPreferences`，明文不落盘，也从不发往服务器。`PBKDF2WithHmacSHA256` 只在 API 26+
+  存在而 minSdk 是 24，所以**实际用的算法会记在旁边**，校验时复用 —— 否则在 API 24 上设的密码，
+  升到 26 之后就解不开了。`LockGate` 决定什么时候重新上锁：退到后台超过 30 秒才重新上锁，
+  这样相册选图、系统弹窗这类短暂切出不会被误判成「离开」。
+- **退出后需要重新登录**：`Prefs.logoutOnExit`。开启后由 `App` 里的
+  `ActivityLifecycleCallbacks` 在**最后一个 Activity 销毁**时清会话；冷启动时也清一次，
+  覆盖进程被直接杀掉、走不到 `onDestroy` 的情况。`isChangingConfigurations` 会跳过 ——
+  旋转屏幕不该把人登出。
+- **应用名称 / Logo**：`Brand` 持有名称和 Logo 的 Compose 状态，所以设置里一改，
+  启动页 / 登录页 / 首页标题 / 「我的」卡片立刻跟着变。选图后复制进应用私有目录
+  （`content://` URI 会在进程重建后失效），居中裁剪并缩到 512×512，
+  每次用新文件名落盘（Coil 按 model 做缓存键，覆盖同名文件会一直显示旧图）。
 
 ---
 
@@ -181,8 +197,8 @@ android/nineone/
     src/main/
       AndroidManifest.xml
       java/com/whooc/nineone/
-        App.kt                Application：Prefs / Http / Store 初始化 + Coil 共用 OkHttp
-        MainActivity.kt
+        App.kt                Application：Prefs / Http / Store / Brand 初始化 + Coil 共用 OkHttp
+        MainActivity.kt        单 Activity；前后台切换驱动 LockGate
         data/
           Api.kt              手写 OkHttp 客户端（含会话容错）
           Http.kt             持久化 CookieJar + 共享 OkHttp 实例
@@ -191,12 +207,15 @@ android/nineone/
           Prefs.kt            SharedPreferences（全局静音是 Compose 状态）
           Store.kt            收藏 / 观看记录
           MediaUrls.kt        根相对路径 → 绝对 URL
+          AppLock.kt          本机进入密码：PBKDF2 哈希 / 校验 / 清除
+          LockGate.kt         锁屏门闸：前后台 + 30 秒宽限期
+          Brand.kt            应用名称与 Logo（Compose 状态 + 图片导入）
         ui/
-          AppNav.kt           顶层导航
+          AppNav.kt           顶层导航（先过锁屏，再过会话）
           theme/              三套配色 + 设计 token
-          components/         卡片、缩略图、预览宿主、状态框
+          components/         卡片、缩略图、预览宿主、状态框、BrandMark
           vm/                 ViewModel
-          screens/            登录 / 首页 / 列表 / 短视频 / 详情 / 播放器 / 片库 / 我的 / 设置
+          screens/            锁屏 / 登录 / 首页 / 列表 / 短视频 / 详情 / 播放器 / 片库 / 我的 / 设置
       res/                    图标、主题、网络安全配置
 ```
 

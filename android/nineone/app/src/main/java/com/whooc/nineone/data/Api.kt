@@ -243,6 +243,21 @@ object Api {
         _session.value = Session.LoggedOut
     }
 
+    /**
+     * Drop the session without asking the server, for the "退出后需要重新登录"
+     * policy. There is no time for a round trip while the process is being torn
+     * down, and the cookie is going away locally either way; the server-side
+     * session expires on its own TTL.
+     *
+     * Safe to call before [Http.init] — an uninitialised cookie jar is caught and
+     * ignored, which matters because this runs from Application.onCreate.
+     */
+    fun forgetSessionLocally() {
+        runCatching { Http.cookies.clear() }
+        confirmedThisRun = false
+        _session.value = Session.LoggedOut
+    }
+
     /** Public endpoint, no login required. */
     suspend fun theme(): String = io {
         val info = json.decodeFromString<ThemeInfo>(requireOk(get("/api/settings/theme"), "主题"))

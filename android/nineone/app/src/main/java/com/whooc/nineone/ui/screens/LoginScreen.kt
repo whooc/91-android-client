@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.whooc.nineone.data.Api
 import com.whooc.nineone.data.Prefs
+import com.whooc.nineone.ui.components.BrandMark
 import com.whooc.nineone.ui.theme.LocalTokens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,14 +83,12 @@ fun LoginScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(24.dp))
-            Text(
-                "91",
+            BrandMark(
+                logoSize = 84.dp,
                 fontSize = 46.sp,
-                fontWeight = FontWeight.Bold,
-                color = tokens.textStrong,
-                letterSpacing = 4.sp
+                color = tokens.textStrong
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text("个人私有视频站", color = tokens.textMuted, fontSize = 13.sp)
             Spacer(Modifier.height(34.dp))
 

@@ -68,7 +68,7 @@ fun HomeScreen(
 
     Column(Modifier.fillMaxSize()) {
         ScreenHeader(
-            title = "91",
+            title = com.whooc.nineone.data.Brand.name,
             subtitle = com.whooc.nineone.data.Prefs.serverUrl,
             actions = {
                 IconButton(onClick = { vm.load(showSpinner = false) }, enabled = !refreshing) {

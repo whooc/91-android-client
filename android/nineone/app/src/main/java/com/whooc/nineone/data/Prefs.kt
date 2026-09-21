@@ -22,6 +22,19 @@ object Prefs {
     private const val KEY_LAST_TAB = "last_tab"
     private const val KEY_GLOBAL_MUTED = "global_muted"
 
+    // Local gate. Only the salted hash is stored — see AppLock.
+    private const val KEY_APP_LOCK_ENABLED = "app_lock_enabled"
+    private const val KEY_APP_LOCK_HASH = "app_lock_hash"
+    private const val KEY_APP_LOCK_SALT = "app_lock_salt"
+    private const val KEY_APP_LOCK_ALGO = "app_lock_algo"
+
+    /** Whether the server session is dropped when the app is closed. */
+    private const val KEY_LOGOUT_ON_EXIT = "logout_on_exit"
+
+    // Branding. The logo is a path inside filesDir, not a content:// URI.
+    private const val KEY_BRAND_NAME = "brand_name"
+    private const val KEY_BRAND_LOGO = "brand_logo_file"
+
     /**
      * Deliberately empty. The APK is meant to be handed to other people, so it
      * must not carry the author's own relay/LAN addresses — no preset list, no
@@ -98,6 +111,61 @@ object Prefs {
         set(value) {
             mutedState = value
             sp.edit().putBoolean(KEY_GLOBAL_MUTED, value).apply()
+        }
+
+    // ------------------------------------------------------------- local gate
+
+    var appLockEnabled: Boolean
+        get() = sp.getBoolean(KEY_APP_LOCK_ENABLED, false)
+        set(value) {
+            sp.edit().putBoolean(KEY_APP_LOCK_ENABLED, value).apply()
+        }
+
+    var appLockHash: String
+        get() = sp.getString(KEY_APP_LOCK_HASH, "") ?: ""
+        set(value) {
+            sp.edit().putString(KEY_APP_LOCK_HASH, value).apply()
+        }
+
+    var appLockSalt: String
+        get() = sp.getString(KEY_APP_LOCK_SALT, "") ?: ""
+        set(value) {
+            sp.edit().putString(KEY_APP_LOCK_SALT, value).apply()
+        }
+
+    /** Which PBKDF2 variant produced [appLockHash]; see AppLock for why. */
+    var appLockAlgo: String
+        get() = sp.getString(KEY_APP_LOCK_ALGO, "") ?: ""
+        set(value) {
+            sp.edit().putString(KEY_APP_LOCK_ALGO, value).apply()
+        }
+
+    // ---------------------------------------------------------------- session
+
+    /**
+     * Off by default, matching the behaviour the client has always had: the
+     * server's 7-day cookie keeps you signed in across restarts. Turning it on
+     * means closing the app ends the session on this device.
+     */
+    var logoutOnExit: Boolean
+        get() = sp.getBoolean(KEY_LOGOUT_ON_EXIT, false)
+        set(value) {
+            sp.edit().putBoolean(KEY_LOGOUT_ON_EXIT, value).apply()
+        }
+
+    // ------------------------------------------------------------------ brand
+
+    var brandName: String
+        get() = sp.getString(KEY_BRAND_NAME, "") ?: ""
+        set(value) {
+            sp.edit().putString(KEY_BRAND_NAME, value).apply()
+        }
+
+    /** Absolute path inside filesDir, or empty when the default mark is used. */
+    var brandLogoFile: String
+        get() = sp.getString(KEY_BRAND_LOGO, "") ?: ""
+        set(value) {
+            sp.edit().putString(KEY_BRAND_LOGO, value).apply()
         }
 
     /** Accepts "host", "host:port", "http://host:port" and normalises it. */

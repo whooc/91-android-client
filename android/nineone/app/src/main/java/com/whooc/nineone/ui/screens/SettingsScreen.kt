@@ -1,5 +1,7 @@
 package com.whooc.nineone.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,14 +49,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.whooc.nineone.BuildConfig
 import com.whooc.nineone.data.Api
+import com.whooc.nineone.data.AppLock
+import com.whooc.nineone.data.Brand
+import com.whooc.nineone.data.LockGate
 import com.whooc.nineone.data.Prefs
 import com.whooc.nineone.data.Store
+import com.whooc.nineone.ui.components.BrandMark
 import com.whooc.nineone.ui.components.ScreenHeader
 import com.whooc.nineone.ui.theme.AppTheme
 import com.whooc.nineone.ui.theme.LocalTokens
@@ -97,6 +106,26 @@ fun SettingsScreen(onBack: () -> Unit) {
     var saved by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }
     var confirmWipe by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    // 品牌
+    var brandName by remember { mutableStateOf(Prefs.brandName.ifBlank { Brand.DEFAULT_NAME }) }
+    var brandNote by remember { mutableStateOf<String?>(null) }
+
+    // 安全
+    var lockEnabled by remember { mutableStateOf(AppLock.isEnabled) }
+    var lockDialog by remember { mutableStateOf(false) }
+    var logoutOnExit by remember { mutableStateOf(Prefs.logoutOnExit) }
+
+    // Picking a logo hands the screen to another app, which looks exactly like
+    // going to the background — so the local gate is told to stay out of the way
+    // until the user is back with a picture.
+    val logoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            brandNote = if (Brand.importLogo(context, uri)) "Logo 已更新" else "这张图片读不出来，换一张试试"
+        }
+    }
 
     Column(
         Modifier
@@ -253,6 +282,91 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
+            // -------------------------------------------------------- 品牌
+            SectionLabel("品牌")
+
+            Column(Modifier.padding(horizontal = 14.dp)) {
+                OutlinedTextField(
+                    value = brandName,
+                    // Saved on every keystroke rather than behind a button: the
+                    // mark is Compose state, so the preview below and the header
+                    // on 首页 follow along as it is typed.
+                    onValueChange = {
+                        brandName = it
+                        Brand.setName(it)
+                    },
+                    label = { Text("应用名称") },
+                    placeholder = { Text(Brand.DEFAULT_NAME, fontSize = 14.sp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "留空则显示 ${Brand.DEFAULT_NAME}。名称和 Logo 只改变应用内的显示，" +
+                        "桌面图标和名称由安装包决定，改不了。",
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    color = tokens.textFaint
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(tokens.bgSunken),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BrandMark(
+                            logoSize = 52.dp,
+                            fontSize = 22.sp,
+                            letterSpacing = 1.sp,
+                            color = tokens.accentText,
+                            cornerRadius = 13.dp
+                        )
+                    }
+
+                    Spacer(Modifier.width(14.dp))
+
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "应用 Logo",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = tokens.textStrong
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            if (Brand.logo != null) "已设置 · 显示时替代名称" else "未设置 · 显示应用名称",
+                            fontSize = 11.sp,
+                            color = tokens.textMuted
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            TextButton(onClick = {
+                                LockGate.suppress()
+                                logoPicker.launch("image/*")
+                            }) { Text("选择图片", color = tokens.accentText) }
+
+                            if (Brand.logo != null) {
+                                TextButton(onClick = {
+                                    Brand.clearLogo(context)
+                                    brandNote = "Logo 已移除"
+                                }) { Text("移除", color = MaterialTheme.colorScheme.error) }
+                            }
+                        }
+                    }
+                }
+
+                brandNote?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Text(it, fontSize = 12.sp, color = tokens.textMuted)
+                }
+            }
+
             // -------------------------------------------------------- 播放
             SectionLabel("播放")
 
@@ -311,6 +425,25 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
+            // -------------------------------------------------------- 安全
+            SectionLabel("安全")
+
+            RowGroup {
+                TextRow(
+                    title = "进入密码",
+                    subtitle = if (lockEnabled) "已开启 · 点击修改或关闭" else "未设置 · 打开应用时需要输入",
+                    onClick = { lockDialog = true }
+                )
+                SwitchRow(
+                    title = "退出后需要重新登录",
+                    subtitle = "彻底关掉应用就清除本机登录状态（只是切到后台不算）",
+                    checked = logoutOnExit
+                ) {
+                    logoutOnExit = it
+                    Prefs.logoutOnExit = it
+                }
+            }
+
             // ---------------------------------------------------- 本地数据
             SectionLabel("本地数据")
 
@@ -357,6 +490,17 @@ fun SettingsScreen(onBack: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 22.dp)
             )
         }
+    }
+
+    if (lockDialog) {
+        LockDialog(
+            alreadySet = lockEnabled,
+            onDismiss = { lockDialog = false },
+            onDone = { enabled ->
+                lockEnabled = enabled
+                lockDialog = false
+            }
+        )
     }
 
     if (confirmLogout) {
@@ -501,4 +645,165 @@ private fun probeServer(base: String): String = try {
     }
 } catch (e: Exception) {
     "连接失败 · ${e.javaClass.simpleName}"
+}
+
+/**
+ * Sets, changes or clears the local gate.
+ *
+ * Both hashing and verification run on [Dispatchers.Default]. PBKDF2 at 120k
+ * iterations takes long enough that doing it inline would show up as a visible
+ * stall on every attempt.
+ *
+ * Clearing the code needs the current one, otherwise the gate would be a
+ * formality — anyone holding the unlocked phone could simply switch it off.
+ */
+@Composable
+private fun LockDialog(
+    alreadySet: Boolean,
+    onDismiss: () -> Unit,
+    onDone: (enabled: Boolean) -> Unit
+) {
+    val tokens = LocalTokens.current
+    val scope = rememberCoroutineScope()
+
+    var current by remember { mutableStateOf("") }
+    var next by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text(if (alreadySet) "修改进入密码" else "设置进入密码") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (alreadySet) {
+                    OutlinedTextField(
+                        value = current,
+                        onValueChange = { current = it; error = null },
+                        label = { Text("当前密码") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+
+                OutlinedTextField(
+                    value = next,
+                    onValueChange = { next = it; error = null },
+                    label = { Text("新密码") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = confirm,
+                    onValueChange = { confirm = it; error = null },
+                    label = { Text("确认新密码") },
+                    singleLine = true,
+                    isError = error != null,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                error?.let {
+                    Spacer(Modifier.height(10.dp))
+                    Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "密码只保存在本机，用来打开应用，和服务器登录密码无关。" +
+                        "忘记后清除应用数据即可重置（会同时清掉登录状态）。",
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    color = tokens.textFaint
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !busy,
+                onClick = {
+                    if (alreadySet && current.isEmpty()) {
+                        error = "请输入当前密码"
+                        return@TextButton
+                    }
+                    if (AppLock.tooShort(next)) {
+                        error = "新密码至少 ${AppLock.MIN_LENGTH} 位"
+                        return@TextButton
+                    }
+                    if (next != confirm) {
+                        error = "两次输入的新密码不一致"
+                        return@TextButton
+                    }
+                    busy = true
+                    scope.launch {
+                        val wrong = alreadySet &&
+                            !withContext(Dispatchers.Default) { AppLock.verify(current) }
+                        if (wrong) {
+                            error = "当前密码不正确"
+                            busy = false
+                            return@launch
+                        }
+                        withContext(Dispatchers.Default) { AppLock.set(next) }
+                        // It has just been configured — asking for it again right
+                        // away would be nonsense.
+                        LockGate.unlock()
+                        busy = false
+                        onDone(true)
+                    }
+                }
+            ) { Text("保存", color = tokens.accentText) }
+        },
+        dismissButton = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (alreadySet) {
+                    TextButton(
+                        enabled = !busy,
+                        onClick = {
+                            if (current.isEmpty()) {
+                                error = "请先输入当前密码"
+                                return@TextButton
+                            }
+                            busy = true
+                            scope.launch {
+                                val ok = withContext(Dispatchers.Default) { AppLock.verify(current) }
+                                if (!ok) {
+                                    error = "当前密码不正确"
+                                    busy = false
+                                    return@launch
+                                }
+                                AppLock.clear()
+                                busy = false
+                                onDone(false)
+                            }
+                        }
+                    ) { Text("关闭密码", color = MaterialTheme.colorScheme.error) }
+                }
+                TextButton(onClick = onDismiss, enabled = !busy) {
+                    Text("取消", color = tokens.textMuted)
+                }
+            }
+        }
+    )
 }

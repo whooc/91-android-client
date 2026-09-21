@@ -53,6 +53,7 @@ import com.whooc.nineone.data.Api
 import com.whooc.nineone.data.Prefs
 import com.whooc.nineone.data.Session
 import com.whooc.nineone.data.Store
+import com.whooc.nineone.ui.components.BrandMark
 import com.whooc.nineone.ui.components.ScreenHeader
 import com.whooc.nineone.ui.components.formatCount
 import com.whooc.nineone.ui.theme.LocalTokens
@@ -105,11 +106,14 @@ fun MineScreen(
                     .background(tokens.accent.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "91",
+                BrandMark(
+                    logoSize = 52.dp,
                     fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = tokens.accentText
+                    letterSpacing = 0.sp,
+                    color = tokens.accentText,
+                    // Half the box, so a logo lands as a circle rather than a
+                    // rounded square.
+                    cornerRadius = 26.dp
                 )
             }
             Spacer(Modifier.width(14.dp))

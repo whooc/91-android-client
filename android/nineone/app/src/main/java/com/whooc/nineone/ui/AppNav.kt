@@ -30,8 +30,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.whooc.nineone.data.Api
+import com.whooc.nineone.data.LockGate
 import com.whooc.nineone.data.Session
+import com.whooc.nineone.ui.components.BrandMark
 import com.whooc.nineone.ui.screens.DetailScreen
+import com.whooc.nineone.ui.screens.LockScreen
 import com.whooc.nineone.ui.screens.LoginScreen
 import com.whooc.nineone.ui.screens.MainScreen
 import com.whooc.nineone.ui.screens.PlayerScreen
@@ -51,15 +54,21 @@ object Routes {
 }
 
 /**
- * The whole app hangs off the session state: unknown → splash, logged out →
- * login, logged in → the navigable shell. That keeps login out of the back
- * stack entirely, which is what you want on mobile.
+ * The whole app hangs off two gates: the local one, then the session.
+ *
+ * The local gate comes first and short-circuits everything, including the
+ * session probe — if a password has been set, nothing touches the network until
+ * it has been entered. `Unknown` → splash, `LoggedOut` → login, `LoggedIn` → the
+ * navigable shell. Keeping login out of the back stack entirely is what you want
+ * on mobile.
  */
 @Composable
 fun NineOneApp() {
     val session by Api.session.collectAsState()
+    val locked = LockGate.locked
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(locked) {
+        if (locked) return@LaunchedEffect
         ThemeController.refreshFromServer()
         Api.refreshSession()
     }
@@ -69,10 +78,14 @@ fun NineOneApp() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            when (session) {
-                Session.Unknown -> SplashScreen()
-                Session.LoggedOut -> LoggedOutGate()
-                is Session.LoggedIn -> MainNavHost()
+            if (locked) {
+                LockScreen()
+            } else {
+                when (session) {
+                    Session.Unknown -> SplashScreen()
+                    Session.LoggedOut -> LoggedOutGate()
+                    is Session.LoggedIn -> MainNavHost()
+                }
             }
         }
     }
@@ -162,12 +175,10 @@ private fun SplashScreen() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                "91",
+            BrandMark(
+                logoSize = 76.dp,
                 fontSize = 44.sp,
-                fontWeight = FontWeight.Bold,
-                color = tokens.textStrong,
-                letterSpacing = 4.sp
+                color = tokens.textStrong
             )
             Spacer(Modifier.height(20.dp))
             CircularProgressIndicator(
