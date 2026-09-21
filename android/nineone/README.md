@@ -17,17 +17,17 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.3.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk)** |
+| **安装包** | **[`apk/91-client-v2.3.1.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.1.apk)** |
 | 大小 | 2.4 MB（2,525,193 字节） |
-| 版本 | 2.3.0（versionCode 9） |
+| 版本 | 2.3.1（versionCode 10） |
 | 包名 | `com.whooc.nineone` |
 | 系统要求 | Android 7.0（API 24）及以上 |
-| SHA-256 | `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7` |
+| SHA-256 | `2e3f1fa41a76184ed78832804283eba8b4cf972390fdd0fcaaad26066f750869` |
 
 直链：
 
 ```
-https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk
+https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.1.apk
 ```
 
 也可以直接看仓库里的 [`apk/`](../../apk/) 目录。
@@ -36,18 +36,18 @@ https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk
 
 ```bash
 # Linux / macOS
-sha256sum 91-client-v2.3.0.apk
+sha256sum 91-client-v2.3.1.apk
 
 # Windows PowerShell
-Get-FileHash .\91-client-v2.3.0.apk -Algorithm SHA256
+Get-FileHash .\91-client-v2.3.1.apk -Algorithm SHA256
 ```
 
-结果应为 `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7`。
+结果应为 `2e3f1fa41a76184ed78832804283eba8b4cf972390fdd0fcaaad26066f750869`。
 
 ### 安装
 
 ```bash
-adb install -r 91-client-v2.3.0.apk
+adb install -r 91-client-v2.3.1.apk
 ```
 
 或者把 APK 传到手机上直接点开安装（需要在系统设置里允许「安装未知来源应用」）。
@@ -102,7 +102,10 @@ App **不内置任何服务器地址**。第一次打开会让你填：
 双指缩放 1x–5x：
 
 - **双指始终是缩放**，以手指中心为锚点（不是死板地绕画面中心）。
-- **单指只在已经放大之后**才用来平移；1x 时这个手势不消费任何事件，所以上下翻页、左右滑出、单击播放/暂停的行为和以前完全一样。
+- **单指在已经放大之后用来平移。** 判据是**当前缩放级别**，而不是「这次手势里出现过双指」—— 放大和拖动几乎总是两次独立手势（你得先松开两根手指才能拖），按后者判断会让平移**完全触发不了**。
+- 1x 时这个手势不消费任何事件，所以上下翻页、左右滑出、单击播放/暂停的行为和以前完全一样。
+- 放大状态下拖动会**挡住翻页**，这是有意的：放大时拖动就是在看细节。想换视频先点「还原」或双指缩回去。
+- 注意只有手指**真的移动**了才消费事件，所以放大状态下单击依然能暂停/播放。
 - 缩放和平移量在**每次写入时夹紧**（画面不能小于页面），所以拖不出黑边。
 - 右上角常驻倍率和一个「还原」，不受工具栏自动隐藏影响；翻到别的页面自动回到 1x。
 

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.3.0-3DDC84?logo=android&logoColor=white"></a>
+  <a href="https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.1.apk"><img alt="下载 Android 客户端" src="https://img.shields.io/badge/Android%20APK-v2.3.1-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Android 7.0+" src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white">
   <img alt="大小 2.4 MB" src="https://img.shields.io/badge/APK-2.4%20MB-blue">
 </p>
@@ -35,21 +35,21 @@
 
 | | |
 | --- | --- |
-| **安装包** | **[`apk/91-client-v2.3.0.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk)** |
+| **安装包** | **[`apk/91-client-v2.3.1.apk`](https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.1.apk)** |
 | 大小 | 2.4 MB（2,525,193 字节） |
-| 版本 | 2.3.0（versionCode 9） |
+| 版本 | 2.3.1（versionCode 10） |
 | 系统要求 | Android 7.0（API 24）及以上 |
 | 包名 | `com.whooc.nineone` |
-| SHA-256 | `31fb12f0eeb083921465aaeda0c0df2da23e89c961d119b5fa6e120c627881e7` |
+| SHA-256 | `2e3f1fa41a76184ed78832804283eba8b4cf972390fdd0fcaaad26066f750869` |
 
-直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.0.apk`
+直链：`https://github.com/whooc/91-android-client/raw/main/apk/91-client-v2.3.1.apk`
 
 ```bash
 # 安装
-adb install -r 91-client-v2.3.0.apk
+adb install -r 91-client-v2.3.1.apk
 
 # 校验（结果应和上表 SHA-256 一致）
-sha256sum 91-client-v2.3.0.apk
+sha256sum 91-client-v2.3.1.apk
 ```
 
 安装后**首次启动需要填写你自己的 91 服务端地址** —— 地址不内置在 APK 里，
@@ -69,7 +69,7 @@ sha256sum 91-client-v2.3.0.apk
 
 短视频的信息层（标题、观看次数、右侧按钮、进度条）5 秒后自动隐藏，任意触摸恢复。
 
-短视频的画面**一律按真实宽高比完整显示**，不做任何裁剪：不匹配手机屏幕比例的视频（1:1、3:4、4:3 这些在短片流里很常见）会居中留黑边，而不是被居中裁掉两边。想铺满屏幕就**双指放大**（1x–5x，以手指中心为锚点），放大后单指拖动看细节，右上角常驻倍率和一个「还原」；翻到下一个视频自动回到 1x。
+短视频的画面**一律按真实宽高比完整显示**，不做任何裁剪：不匹配手机屏幕比例的视频（1:1、3:4、4:3 这些在短片流里很常见）会居中留黑边，而不是被居中裁掉两边。想铺满屏幕就**双指放大**（1x–5x，以手指中心为锚点），放大后单指拖动看细节（此时拖动不会翻页，先点「还原」或缩回去再换视频），右上角常驻倍率和一个「还原」；翻到下一个视频自动回到 1x。
 
 ### 安全与个性化
 

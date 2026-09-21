@@ -410,29 +410,41 @@ private fun ShortsPage(
             .pointerInput(item.id) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
-                    var pinching = false
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.changes.none { it.pressed }) break
                         // Something deeper (the scrubber, the action rail)
                         // already owns this pointer — stay out of its way.
                         if (event.changes.any { it.isConsumed }) continue
-                        val fingers = event.changes.count { it.pressed }
-                        if (fingers >= 2) {
-                            pinching = true
+                        if (event.changes.count { it.pressed } >= 2) {
                             applyTransform.value(
                                 event.calculateCentroid(useCurrent = false),
                                 event.calculatePan(),
                                 event.calculateZoom()
                             )
                             event.changes.forEach { it.consume() }
-                        } else if (pinching && zoom > 1.001f) {
-                            applyTransform.value(
-                                event.calculateCentroid(useCurrent = false),
-                                event.calculatePan(),
-                                1f
-                            )
-                            event.changes.forEach { it.consume() }
+                        } else if (zoom > 1.001f) {
+                            // Zoomed in, so a lone finger means pan — not a
+                            // page turn.
+                            //
+                            // Keyed off the zoom level and NOT off "this
+                            // gesture began as a pinch": pinching and panning
+                            // are almost always two separate gestures, because
+                            // you lift both fingers before dragging. Gating on
+                            // the pinch flag made panning unreachable — the
+                            // picture simply refused to move.
+                            //
+                            // Only consume once the finger actually travels, so
+                            // a plain tap still reaches the play/pause handler.
+                            val travel = event.calculatePan()
+                            if (travel != Offset.Zero) {
+                                applyTransform.value(
+                                    event.calculateCentroid(useCurrent = false),
+                                    travel,
+                                    1f
+                                )
+                                event.changes.forEach { it.consume() }
+                            }
                         }
                     }
                 }
