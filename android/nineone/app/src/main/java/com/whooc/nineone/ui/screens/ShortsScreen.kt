@@ -1,6 +1,7 @@
 package com.whooc.nineone.ui.screens
 
 import android.app.Activity
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -9,10 +10,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,21 +59,28 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -78,6 +90,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import com.whooc.nineone.R
 import com.whooc.nineone.data.MediaUrls
 import com.whooc.nineone.data.Players
 import com.whooc.nineone.data.Prefs
@@ -97,6 +110,10 @@ import kotlin.math.roundToInt
 
 /** How long the on-video chrome (title, counters, action rail) stays up. */
 private const val CHROME_TIMEOUT_MS = 5_000L
+
+/** Pinch-zoom range for the picture. 1x is "show the whole frame". */
+private const val MIN_ZOOM = 1f
+private const val MAX_ZOOM = 5f
 
 /**
  * Vertical short-video feed.
@@ -218,6 +235,16 @@ private fun ShortsPage(
     var chromeVisible by remember(item.id) { mutableStateOf(true) }
     var chromeEpoch by remember(item.id) { mutableIntStateOf(0) }
 
+    // Pinch-zoom. `pan` is in raw pixels and only ever moves when the picture
+    // is larger than the page, so it is clamped on every write.
+    var zoom by remember(item.id) { mutableFloatStateOf(MIN_ZOOM) }
+    var pan by remember(item.id) { mutableStateOf(Offset.Zero) }
+
+    // The page fills the feed, so its measured size is the container the video
+    // has to be fitted into. Measured rather than read from the window because
+    // the bottom bar and the system insets are already subtracted.
+    var pageSize by remember(item.id) { mutableStateOf(IntSize.Zero) }
+
     // Watching a short counts as watching, exactly like the full player — the
     // local history is the only per-user record the backend has no endpoint for.
     fun persistProgress() {
@@ -278,6 +305,9 @@ private fun ShortsPage(
         } else {
             player.pause()
             persistProgress()
+            // Come back to a fresh page, not to somebody else's zoom level.
+            zoom = MIN_ZOOM
+            pan = Offset.Zero
         }
     }
 
@@ -315,12 +345,98 @@ private fun ShortsPage(
     } else 0f
     val landscape = aspect > 1.02f
 
+    val density = LocalDensity.current
+    val pageWpx = pageSize.width.toFloat()
+    val pageHpx = pageSize.height.toFloat()
+
+    // Contain, never crop. Portrait clips used to be forced into a
+    // centre-cropped full-page fill, which silently threw away everything
+    // outside the middle slice — a square or 3:4 clip lost most of its frame,
+    // and even a 9:16 clip lost its top and bottom on a tall phone. Fitting
+    // keeps the whole picture on screen; pinch-zoom is how you fill the page
+    // when that is actually what you want.
+    val videoWpx: Float
+    val videoHpx: Float
+    if (aspect > 0f && pageWpx > 0f && pageHpx > 0f) {
+        if (pageWpx / pageHpx > aspect) {
+            videoHpx = pageHpx
+            videoWpx = pageHpx * aspect
+        } else {
+            videoWpx = pageWpx
+            videoHpx = pageWpx / aspect
+        }
+    } else {
+        videoWpx = pageWpx
+        videoHpx = pageHpx
+    }
+    val videoW: Dp = with(density) { videoWpx.toDp() }
+    val videoH: Dp = with(density) { videoHpx.toDp() }
+
+    // Read through `rememberUpdatedState` so the gesture always sees the
+    // geometry of the current composition instead of whatever was live when
+    // the pointer input was installed.
+    val applyTransform = rememberUpdatedState(
+        { centroid: Offset, travel: Offset, zoomChange: Float ->
+            val next = (zoom * zoomChange).coerceIn(MIN_ZOOM, MAX_ZOOM)
+            val k = next / zoom
+            // Keep whatever sits under the fingers pinned there while the
+            // scale changes, then apply the fingers' own travel.
+            val focus = centroid - Offset(pageWpx / 2f, pageHpx / 2f)
+            val maxX = ((videoWpx * next - pageWpx) / 2f).coerceAtLeast(0f)
+            val maxY = ((videoHpx * next - pageHpx) / 2f).coerceAtLeast(0f)
+            val moved = pan * k + focus * (1f - k) + travel
+            zoom = next
+            pan = Offset(
+                moved.x.coerceIn(-maxX, maxX),
+                moved.y.coerceIn(-maxY, maxY)
+            )
+        }
+    )
+
     Box(
         Modifier
             .fillMaxSize()
+            // A zoomed picture may spill over the letterbox bars, but never
+            // onto the neighbouring page.
+            .clipToBounds()
+            .onSizeChanged { pageSize = it }
             // Swipe sideways to leave the feed; the whole page follows the
             // finger so the gesture reads as "throwing the video away".
             .offset { IntOffset(dragX.value.roundToInt(), 0) }
+            // Two fingers always mean zoom. One finger only pans once the
+            // picture is already zoomed in; at 1x this handler consumes
+            // nothing, so the pager, the exit swipe and the play/pause tap
+            // keep working exactly as before.
+            .pointerInput(item.id) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var pinching = false
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.changes.none { it.pressed }) break
+                        // Something deeper (the scrubber, the action rail)
+                        // already owns this pointer — stay out of its way.
+                        if (event.changes.any { it.isConsumed }) continue
+                        val fingers = event.changes.count { it.pressed }
+                        if (fingers >= 2) {
+                            pinching = true
+                            applyTransform.value(
+                                event.calculateCentroid(useCurrent = false),
+                                event.calculatePan(),
+                                event.calculateZoom()
+                            )
+                            event.changes.forEach { it.consume() }
+                        } else if (pinching && zoom > 1.001f) {
+                            applyTransform.value(
+                                event.calculateCentroid(useCurrent = false),
+                                event.calculatePan(),
+                                1f
+                            )
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
+                }
+            }
             .pointerInput(item.id) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
@@ -363,87 +479,92 @@ private fun ShortsPage(
                 }
             }
     ) {
-        // Poster underneath so the first frame is never a black flash.
-        val poster = MediaUrls.resolve(
-            item.backgroundPoster.ifBlank { item.poster.ifBlank { item.thumbnail } }
-        )
-        if (poster.isNotEmpty()) {
-            AsyncImage(
-                model = poster,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+        // Poster and picture share one rect: the still can never peek out from
+        // behind a letterboxed frame, and the two zoom together.
+        Box(
+            Modifier
+                .align(Alignment.Center)
+                // Until the page has been measured there is nothing to fit
+                // against, so the very first frame just fills it.
+                .then(
+                    if (pageWpx > 0f && pageHpx > 0f) {
+                        Modifier.size(videoW, videoH)
+                    } else {
+                        Modifier.fillMaxSize()
+                    }
+                )
+                .graphicsLayer {
+                    scaleX = zoom
+                    scaleY = zoom
+                    translationX = pan.x
+                    translationY = pan.y
+                }
+        ) {
+            // Poster underneath so the first frame is never a black flash.
+            val poster = MediaUrls.resolve(
+                item.backgroundPoster.ifBlank { item.poster.ifBlank { item.thumbnail } }
             )
-        }
-
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            // Portrait clips to fill the page (RESIZE_MODE_ZOOM); landscape is
-            // letterboxed at its true aspect ratio instead of being cropped to
-            // a vertical frame, and gets an explicit fullscreen entry point
-            // underneath it.
-            val videoHeight = if (landscape && aspect > 0f) maxWidth / aspect else maxHeight
-
-            Box(
-                Modifier
-                    .align(Alignment.Center)
-                    .then(
-                        if (landscape && aspect > 0f) {
-                            Modifier.fillMaxWidth().height(videoHeight)
-                        } else {
-                            Modifier.fillMaxSize()
-                        }
-                    )
-            ) {
-                AndroidView(
-                    factory = { ctx ->
-                        PlayerView(ctx).apply {
-                            layoutParams = ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-                            useController = false
-                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                            setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
-                            setKeepContentOnPlayerReset(true)
-                            // Let taps and the swipe-to-exit gesture fall through
-                            // to the Compose layer instead of being eaten here.
-                            isClickable = false
-                            isFocusable = false
-                            this.player = player
-                        }
-                    },
-                    update = { view ->
-                        view.player = player
-                        view.resizeMode = if (landscape) {
-                            AspectRatioFrameLayout.RESIZE_MODE_FIT
-                        } else {
-                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                        }
-                    },
+            if (poster.isNotEmpty()) {
+                AsyncImage(
+                    model = poster,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
-            if (landscape && aspect > 0f) {
-                Row(
-                    Modifier
-                        .align(Alignment.Center)
-                        .offset(y = videoHeight / 2 + 26.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0x99000000))
-                        .clickable { onOpenPlayer(item.id) }
-                        .padding(horizontal = 16.dp, vertical = 9.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Fullscreen,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text("全屏播放", color = Color.White, fontSize = 13.sp)
-                }
+            AndroidView(
+                factory = { ctx ->
+                    // Inflated rather than constructed so the surface type can
+                    // come from XML — this one has to be a TextureView, or the
+                    // zoom transform above would not reach the picture.
+                    (
+                        LayoutInflater.from(ctx)
+                            .inflate(R.layout.view_shorts_player, null) as PlayerView
+                        ).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        useController = false
+                        // The rect is already the video's true aspect ratio,
+                        // so FIT has nothing left to letterbox.
+                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        setKeepContentOnPlayerReset(true)
+                        // Let taps and the swipe-to-exit gesture fall through
+                        // to the Compose layer instead of being eaten here.
+                        isClickable = false
+                        isFocusable = false
+                        this.player = player
+                    }
+                },
+                update = { view -> view.player = player },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Only landscape clips get an explicit fullscreen entry point: a
+        // portrait clip is already as large as the page allows.
+        if (landscape && aspect > 0f) {
+            Row(
+                Modifier
+                    .align(Alignment.Center)
+                    .offset(y = videoH / 2 + 26.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0x99000000))
+                    .clickable { onOpenPlayer(item.id) }
+                    .padding(horizontal = 16.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Fullscreen,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("全屏播放", color = Color.White, fontSize = 13.sp)
             }
         }
 
@@ -602,6 +723,35 @@ private fun ShortsPage(
                 }
 
                 ShortsAction(icon = Icons.Default.Info, label = "详情") { onOpenDetail(item.id) }
+            }
+        }
+
+        // Zoom readout. Deliberately outside the chrome's auto-hide: if the
+        // chrome is away and the user has zoomed in, this is the only obvious
+        // way back to 1x short of pinching the picture back down.
+        if (zoom > 1.02f) {
+            Row(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(end = 12.dp, top = 12.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0x99000000))
+                    .clickable {
+                        zoom = MIN_ZOOM
+                        pan = Offset.Zero
+                    }
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${(zoom * 10).roundToInt() / 10f}x",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("还原", color = Color(0xFFBBBBBB), fontSize = 12.sp)
             }
         }
 
